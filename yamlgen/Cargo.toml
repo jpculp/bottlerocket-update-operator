@@ -6,3 +6,6 @@ publish = false
 
 [build-dependencies]
 brupop = { path = "../brupop" }
+dotenv = "0.15"
+kube = { "version" = "0.59.0", default-features = true, features = ["derive"] }
+serde_yaml = "0.8"
