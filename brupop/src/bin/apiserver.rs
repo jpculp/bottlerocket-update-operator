@@ -1,25 +1,25 @@
 use actix_web::{
-    middleware, post, put, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
+    get, middleware, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
+
+use brupop::models::api::UpsertBottlerocketNodeRequest;
 
 #[derive(Debug, Clone)]
 struct APIServerSettings {}
 
-#[post("/bottlerocket-node-resource")]
-async fn create_bottlerocket_node_resource(
-    _req: HttpRequest,
-    _settings: web::Data<APIServerSettings>,
-) -> impl Responder {
-    HttpResponse::Ok().body("Hello, world!")
+/// Implements a shallow health check for the HTTP service.
+#[get("/ping")]
+async fn health_check() -> impl Responder {
+    HttpResponse::Ok().body("pong")
 }
 
-#[put("/bottlerocket-node-resource/{node_id}")]
-async fn update_bottlerocket_node_resource(
+#[post("/bottlerocket-node-resource")]
+async fn create_or_update_bottlerocket_node_resource(
     _req: HttpRequest,
-    web::Path(node_id): web::Path<String>,
     _settings: web::Data<APIServerSettings>,
+    upsert_request: web::Json<UpsertBottlerocketNodeRequest>,
 ) -> impl Responder {
-    HttpResponse::Ok().body(format!("Updating node with id {}", node_id))
+    HttpResponse::Ok().body("Hello, world!")
 }
 
 #[actix_web::main]
@@ -30,10 +30,10 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         let api_server_settings = APIServerSettings {};
         App::new()
-            .wrap(middleware::Logger::default())
+            .wrap(middleware::Logger::default().exclude("/ping"))
             .data(api_server_settings)
-            .service(create_bottlerocket_node_resource)
-            .service(update_bottlerocket_node_resource)
+            .service(create_or_update_bottlerocket_node_resource)
+            .service(health_check)
     })
     .bind("127.0.0.1:8080")?
     .run()

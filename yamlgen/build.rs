@@ -1,13 +1,11 @@
 /*!
 
-The custom resource definitions are modeled as Rust structs in the client crate. Here we generate
-the corresponding k8s yaml files. These are needed when setting up a TestSys cluster. Crates that
-depend on these files can add yamlgen as a build dependency to ensure the files are current. Scripts
-can call `cargo build --package yamlgen`.
+The custom resource definitions are modeled as Rust structs. Here we generate
+the corresponding k8s yaml files.
 
 !*/
 
-use brupop::node::BottlerocketNode;
+use brupop::models::node::BottlerocketNode;
 use kube::CustomResourceExt;
 use std::env;
 use std::fs::File;
