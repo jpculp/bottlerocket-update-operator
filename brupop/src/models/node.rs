@@ -31,6 +31,7 @@ impl Default for BottlerocketNodeState {
     kind = "BottlerocketNode",
     namespaced,
     plural = "bottlerocketnodes",
+    shortname = "brn",
     singular = "bottlerocketnode",
     status = "BottlerocketNodeStatus",
     version = "v1"

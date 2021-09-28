@@ -10,7 +10,8 @@ spec:
     categories: []
     kind: BottlerocketNode
     plural: bottlerocketnodes
-    shortNames: []
+    shortNames:
+      - brn
     singular: bottlerocketnode
   scope: Namespaced
   versions:
