@@ -17,8 +17,7 @@ const HEADER: &str = "# This file is generated. Do not edit.\n";
 
 fn main() {
     // Re-run this build script if the model changes.
-    println!("cargo:rerun-if-changed=../client/src/model");
-    println!("cargo:rerun-if-changed=../client/src/system");
+    println!("cargo:rerun-if-changed=../brupop/src/models");
     // Re-run the yaml generation if these variables change
     println!("cargo:rerun-if-env-changed=BRUPOP_CONTROLLER_IMAGE");
     println!("cargo:rerun-if-env-changed=BRUPOP_CONTROLLER_IMAGE_PULL_SECRET");
