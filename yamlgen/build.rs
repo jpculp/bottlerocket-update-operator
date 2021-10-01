@@ -5,7 +5,7 @@ the corresponding k8s yaml files.
 
 !*/
 
-use brupop::models::node::BottlerocketNode;
+use apiserver::models::node::BottlerocketNode;
 use kube::CustomResourceExt;
 use std::env;
 use std::fs::File;
