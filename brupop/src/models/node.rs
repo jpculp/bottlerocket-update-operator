@@ -46,6 +46,6 @@ pub struct BottlerocketNodeSpec {
 #[derive(Clone, Debug, Default, Serialize, Deserialize, Eq, PartialEq, JsonSchema)]
 pub struct BottlerocketNodeStatus {
     current_version: String,
-    available_version: Option<String>,
+    available_version: Vec<String>,
     current_state: BottlerocketNodeState,
 }

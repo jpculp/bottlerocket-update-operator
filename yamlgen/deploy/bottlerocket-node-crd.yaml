@@ -44,8 +44,9 @@ spec:
               nullable: true
               properties:
                 available_version:
-                  nullable: true
-                  type: string
+                  items:
+                    type: string
+                  type: array
                 current_state:
                   description: "BottlerocketNodeState represents a node's state in the update state machine."
                   enum:
@@ -58,6 +59,7 @@ spec:
                 current_version:
                   type: string
               required:
+                - available_version
                 - current_state
                 - current_version
               type: object
