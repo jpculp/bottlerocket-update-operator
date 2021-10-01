@@ -1,9 +1,9 @@
-.PHONY: build sdk-openssl apiserver-image
+.PHONY: build sdk-openssl agent-image apiserver-image controller-image
 
 UNAME_ARCH=$(shell uname -m)
 ARCH ?= $(lastword $(subst :, ,$(filter $(UNAME_ARCH):%,x86_64:amd64 aarch64:arm64)))
 
-images: apiserver-image
+images: agent-image apiserver-image controller-image
 
 # Builds, Lints and Tests the Rust workspace
 build:
@@ -18,8 +18,20 @@ sdk-openssl:
 		--tag "bottlerocket-sdk-openssl-$(UNAME_ARCH)" \
 		-f Dockerfile.sdk_openssl .
 
+agent-image: sdk-openssl
+	docker build $(DOCKER_BUILD_FLAGS) \
+		--build-arg ARCH="$(UNAME_ARCH)" \
+		--tag "brupop-agent" \
+		-f agent/Dockerfile .
+
 apiserver-image: sdk-openssl
 	docker build $(DOCKER_BUILD_FLAGS) \
 		--build-arg ARCH="$(UNAME_ARCH)" \
 		--tag "brupop-apiserver" \
 		-f apiserver/Dockerfile .
+
+controller-image: sdk-openssl
+	docker build $(DOCKER_BUILD_FLAGS) \
+		--build-arg ARCH="$(UNAME_ARCH)" \
+		--tag "brupop-controller" \
+		-f controller/Dockerfile .
