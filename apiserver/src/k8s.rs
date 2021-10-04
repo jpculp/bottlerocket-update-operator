@@ -8,14 +8,14 @@ const MAX_RETRIES: u32 = 3;
 const BACKOFF_MS: u64 = 500;
 
 /// Create or update an object in `api` with `data`'s name
-pub async fn create_or_update<T>(api: &Api<T>, data: T, what: &str) -> Result<()>
+pub async fn create_or_update<T>(api: &Api<T>, data: &T, what: &str) -> Result<()>
 where
     T: Clone + DeserializeOwned + Debug + kube::Resource + Serialize,
 {
     let mut error = None;
 
     for _ in 0..MAX_RETRIES {
-        match create_or_update_internal(api, data.clone(), what).await {
+        match create_or_update_internal(api, data, what).await {
             Ok(()) => return Ok(()),
             Err(e) => error = Some(e),
         }
@@ -27,7 +27,7 @@ where
     }
 }
 
-async fn create_or_update_internal<T>(api: &Api<T>, data: T, what: &str) -> Result<()>
+async fn create_or_update_internal<T>(api: &Api<T>, data: &T, what: &str) -> Result<()>
 where
     T: Clone + DeserializeOwned + Debug + kube::Resource + Serialize,
 {
@@ -37,11 +37,11 @@ where
             api.patch(
                 &deployment.name(),
                 &PatchParams::default(),
-                &Patch::Merge(data),
+                &Patch::Merge(data.clone()),
             )
             .await
         }
-        Err(_err) => api.create(&PostParams::default(), &data).await,
+        Err(_err) => api.create(&PostParams::default(), data).await,
     }
     .context(error::Creation { what })?;
 

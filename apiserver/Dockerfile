@@ -14,4 +14,6 @@ COPY --from=build /etc/pki /etc/pki
 # Copy binary
 COPY --from=build /src/apiserver/bin/server ./
 
+EXPOSE 8080
+
 ENTRYPOINT ["./server"]

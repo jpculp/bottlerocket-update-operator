@@ -5,7 +5,14 @@ the corresponding k8s yaml files.
 
 !*/
 
-use apiserver::models::node::BottlerocketNode;
+use apiserver::models::{
+    apiserver::{
+        apiserver_cluster_role, apiserver_cluster_role_binding, apiserver_deployment,
+        apiserver_service_account,
+    },
+    namespace::brupop_namespace,
+    node::BottlerocketNode,
+};
 use kube::CustomResourceExt;
 use std::env;
 use std::fs::File;
@@ -17,10 +24,10 @@ const HEADER: &str = "# This file is generated. Do not edit.\n";
 
 fn main() {
     // Re-run this build script if the model changes.
-    println!("cargo:rerun-if-changed=../brupop/src/models");
+    println!("cargo:rerun-if-changed=../apiserver/src/models");
     // Re-run the yaml generation if these variables change
-    println!("cargo:rerun-if-env-changed=BRUPOP_CONTROLLER_IMAGE");
-    println!("cargo:rerun-if-env-changed=BRUPOP_CONTROLLER_IMAGE_PULL_SECRET");
+    println!("cargo:rerun-if-env-changed=BRUPOP_APISERVER_IMAGE");
+    println!("cargo:rerun-if-env-changed=BRUPOP_APISERVER_IMAGE_PULL_SECRET");
 
     dotenv::dotenv().ok();
 
@@ -29,7 +36,26 @@ fn main() {
         .join("bottlerocket-node-crd.yaml");
     let mut bottlerocket_node_crd = File::create(&path).unwrap();
 
+    let path = PathBuf::from(YAMLGEN_DIR)
+        .join("deploy")
+        .join("brupop-apiserver.yaml");
+    let mut brupop_apiserver = File::create(&path).unwrap();
+
     // testsys-crd related K8S manifest
     bottlerocket_node_crd.write_all(HEADER.as_bytes()).unwrap();
     serde_yaml::to_writer(&bottlerocket_node_crd, &BottlerocketNode::crd()).unwrap();
+
+    let apiserver_image = env::var("BRUPOP_APISERVER_IMAGE").ok().unwrap();
+    let apiserver_image_pull_secrets = env::var("BRUPOP_APISERVER_IMAGE_PULL_SECRET").ok();
+
+    brupop_apiserver.write_all(HEADER.as_bytes()).unwrap();
+    serde_yaml::to_writer(&brupop_apiserver, &brupop_namespace()).unwrap();
+    serde_yaml::to_writer(&brupop_apiserver, &apiserver_service_account()).unwrap();
+    serde_yaml::to_writer(&brupop_apiserver, &apiserver_cluster_role()).unwrap();
+    serde_yaml::to_writer(&brupop_apiserver, &apiserver_cluster_role_binding()).unwrap();
+    serde_yaml::to_writer(
+        &brupop_apiserver,
+        &apiserver_deployment(apiserver_image, apiserver_image_pull_secrets),
+    )
+    .unwrap();
 }

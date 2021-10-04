@@ -46,6 +46,20 @@ pub struct BottlerocketNodeSpec {
 #[derive(Clone, Debug, Default, Serialize, Deserialize, Eq, PartialEq, JsonSchema)]
 pub struct BottlerocketNodeStatus {
     current_version: String,
-    available_version: Vec<String>,
+    available_versions: Vec<String>,
     current_state: BottlerocketNodeState,
+}
+
+impl BottlerocketNodeStatus {
+    pub fn new(
+        current_version: String,
+        available_versions: Vec<String>,
+        current_state: BottlerocketNodeState,
+    ) -> Self {
+        BottlerocketNodeStatus {
+            current_version,
+            available_versions,
+            current_state,
+        }
+    }
 }

@@ -43,7 +43,7 @@ spec:
               description: "`BottlerocketNodeStatus` surfaces the current state of a bottlerocket node. The status is updated by the host agent, while the spec is updated by the brupop controller."
               nullable: true
               properties:
-                available_version:
+                available_versions:
                   items:
                     type: string
                   type: array
@@ -59,7 +59,7 @@ spec:
                 current_version:
                   type: string
               required:
-                - available_version
+                - available_versions
                 - current_state
                 - current_version
               type: object

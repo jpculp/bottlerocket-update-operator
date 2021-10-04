@@ -1,7 +1,10 @@
 use actix_web::{
-    get, middleware, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
+    get, middleware, post,
+    web::{self, Data},
+    App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use kube::api::Api;
+use serde_json::json;
 use snafu::ResultExt;
 
 use crate::error::{self, Result};
@@ -19,6 +22,15 @@ pub struct UpsertBottlerocketNodeRequest {
     pub node_status: BottlerocketNodeStatus,
 }
 
+impl UpsertBottlerocketNodeRequest {
+    pub fn new(node_name: String, node_status: BottlerocketNodeStatus) -> Self {
+        UpsertBottlerocketNodeRequest {
+            node_name,
+            node_status,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct APIServerSettings {
     pub k8s_client: kube::client::Client,
@@ -32,12 +44,12 @@ impl APIServerSettings {
 
 /// Implements a shallow health check for the HTTP service.
 #[get("/ping")]
-pub async fn health_check() -> impl Responder {
+async fn health_check() -> impl Responder {
     HttpResponse::Ok().body("pong")
 }
 
 #[post("/bottlerocket-node-resource")]
-pub async fn upsert_bottlerocket_node_resource(
+async fn upsert_bottlerocket_node_resource(
     _req: HttpRequest,
     settings: web::Data<APIServerSettings>,
     create_request: web::Json<UpsertBottlerocketNodeRequest>,
@@ -49,12 +61,13 @@ pub async fn upsert_bottlerocket_node_resource(
     // let node_status = create_request.node_status.clone();
     // TODO add OwnerReference to created resource.
     let br_node = BottlerocketNode::new(&create_request.node_name, node_spec);
+    return Ok(HttpResponse::Ok().body(format!("{}", json!(&br_node))));
 
     let api: Api<BottlerocketNode> = Api::namespaced(k8s_client.clone(), constants::NAMESPACE);
 
-    k8s::create_or_update(&api, br_node, "BottlerocketNode Custom Resource").await?;
+    k8s::create_or_update(&api, &br_node, "BottlerocketNode Custom Resource").await?;
 
-    Ok(HttpResponse::Ok().body("Hello, world!"))
+    Ok(HttpResponse::Ok().body(format!("{}", json!(&br_node))))
 }
 
 #[derive(Clone)]
@@ -71,7 +84,7 @@ impl APIServer {
         HttpServer::new(move || {
             App::new()
                 .wrap(middleware::Logger::default().exclude("/ping"))
-                .data(self.settings.clone())
+                .app_data(Data::new(self.settings.clone()))
                 .service(upsert_bottlerocket_node_resource)
                 .service(health_check)
         })
