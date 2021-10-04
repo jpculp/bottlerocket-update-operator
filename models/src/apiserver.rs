@@ -1,4 +1,4 @@
-use crate::models::constants::{
+use crate::constants::{
     APP_COMPONENT, APP_MANAGED_BY, APP_PART_OF, BRUPOP, LABEL_COMPONENT, NAMESPACE,
 };
 use k8s_openapi::api::apps::v1::{

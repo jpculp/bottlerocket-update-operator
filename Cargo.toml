@@ -3,5 +3,6 @@ members = [
     "agent",
     "apiserver",
     "controller",
+    "models",
     "yamlgen"
 ]

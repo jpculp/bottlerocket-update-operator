@@ -5,7 +5,8 @@ the corresponding k8s yaml files.
 
 !*/
 
-use apiserver::models::{
+use kube::CustomResourceExt;
+use models::{
     apiserver::{
         apiserver_cluster_role, apiserver_cluster_role_binding, apiserver_deployment,
         apiserver_service_account,
@@ -13,7 +14,6 @@ use apiserver::models::{
     namespace::brupop_namespace,
     node::BottlerocketNode,
 };
-use kube::CustomResourceExt;
 use std::env;
 use std::fs::File;
 use std::io::Write;

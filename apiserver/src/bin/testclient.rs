@@ -1,7 +1,5 @@
-use apiserver::{
-    api::UpsertBottlerocketNodeRequest,
-    models::node::{BottlerocketNodeState, BottlerocketNodeStatus},
-};
+use apiserver::api::UpsertBottlerocketNodeRequest;
+use models::node::{BottlerocketNodeState, BottlerocketNodeStatus};
 
 #[tokio::main]
 async fn main() {

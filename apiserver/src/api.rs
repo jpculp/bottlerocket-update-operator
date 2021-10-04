@@ -9,7 +9,7 @@ use snafu::ResultExt;
 
 use crate::error::{self, Result};
 use crate::k8s;
-use crate::models::{
+use models::{
     constants,
     node::{BottlerocketNode, BottlerocketNodeSpec, BottlerocketNodeStatus},
 };
