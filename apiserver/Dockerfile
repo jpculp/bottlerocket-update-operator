@@ -12,8 +12,8 @@ FROM scratch
 COPY --from=build /etc/ssl /etc/ssl
 COPY --from=build /etc/pki /etc/pki
 # Copy binary
-COPY --from=build /src/apiserver/bin/server ./
+COPY --from=build /src/apiserver/bin/apiserver ./
 
 EXPOSE 8080
 
-ENTRYPOINT ["./server"]
+ENTRYPOINT ["./apiserver"]

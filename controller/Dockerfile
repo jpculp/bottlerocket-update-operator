@@ -12,6 +12,6 @@ FROM scratch
 COPY --from=build /etc/ssl /etc/ssl
 COPY --from=build /etc/pki /etc/pki
 # Copy binary
-COPY --from=build /src/controller/bin/server ./
+COPY --from=build /src/controller/bin/controller ./
 
-ENTRYPOINT ["./server"]
+ENTRYPOINT ["./controller"]

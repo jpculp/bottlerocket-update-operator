@@ -24,7 +24,7 @@ const HEADER: &str = "# This file is generated. Do not edit.\n";
 
 fn main() {
     // Re-run this build script if the model changes.
-    println!("cargo:rerun-if-changed=../apiserver/src/models");
+    println!("cargo:rerun-if-changed=../models/src");
     // Re-run the yaml generation if these variables change
     println!("cargo:rerun-if-env-changed=BRUPOP_APISERVER_IMAGE");
     println!("cargo:rerun-if-env-changed=BRUPOP_APISERVER_IMAGE_PULL_SECRET");
