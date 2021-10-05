@@ -11,8 +11,19 @@ pub enum Error {
     #[snafu(display("Unable to create client: {}", source))]
     ClientCreate { source: kube::Error },
 
-    #[snafu(display("Error creating {}: {}", what, source))]
-    Creation { what: String, source: kube::Error },
+    #[snafu(display("Error creating ({}, {}): {}", node_name, node_uid, source))]
+    BottlerocketNodeCreate {
+        node_name: String,
+        node_uid: String,
+        source: kube::Error,
+    },
+
+    #[snafu(display("Error patching ({}, {}): {}", node_name, node_uid, source))]
+    BottlerocketNodeUpdate {
+        node_name: String,
+        node_uid: String,
+        source: kube::Error,
+    },
 
     #[snafu(display("Error running HTTP server: {}", source))]
     HttpServerError { source: std::io::Error },

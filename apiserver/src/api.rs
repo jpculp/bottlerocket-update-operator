@@ -1,15 +1,14 @@
 use actix_web::{
-    get, middleware, post,
+    get, middleware, post, put,
     web::{self, Data},
     App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::OwnerReference;
-use kube::api::{Api, ObjectMeta};
+use kube::api::{Api, ObjectMeta, Patch, PatchParams, PostParams};
 use serde_json::json;
 use snafu::ResultExt;
 
 use crate::error::{self, Result};
-use crate::k8s;
 use models::{
     constants,
     node::{BottlerocketNode, BottlerocketNodeSpec, BottlerocketNodeStatus},
@@ -18,20 +17,16 @@ use models::{
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UpsertBottlerocketNodeRequest {
+pub struct CreateBottlerocketNodeRequest {
+    pub node_name: String,
+    pub node_uid: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateBottlerocketNodeRequest {
     pub node_name: String,
     pub node_uid: String,
     pub node_status: BottlerocketNodeStatus,
-}
-
-impl UpsertBottlerocketNodeRequest {
-    pub fn new(node_name: String, node_uid: String, node_status: BottlerocketNodeStatus) -> Self {
-        UpsertBottlerocketNodeRequest {
-            node_name,
-            node_uid,
-            node_status,
-        }
-    }
 }
 
 #[derive(Clone)]
@@ -52,22 +47,19 @@ async fn health_check() -> impl Responder {
 }
 
 #[post("/bottlerocket-node-resource")]
-async fn upsert_bottlerocket_node_resource(
+async fn create_bottlerocket_node_resource(
     _req: HttpRequest,
     settings: web::Data<APIServerSettings>,
-    create_request: web::Json<UpsertBottlerocketNodeRequest>,
+    create_request: web::Json<CreateBottlerocketNodeRequest>,
 ) -> Result<impl Responder> {
     let k8s_client = &settings.k8s_client;
 
-    // TODO add initial node state per below
-    // let node_status = create_request.node_status.clone();
-    // TODO add OwnerReference to created resource.
     let br_node = BottlerocketNode {
         metadata: ObjectMeta {
             name: Some(create_request.node_name.clone()),
             owner_references: Some(vec![OwnerReference {
                 api_version: "v1".to_string(),
-                kind: "Node".to_string(),
+                kind: "BottlerocketNode".to_string(),
                 name: create_request.node_name.clone(),
                 uid: create_request.node_uid.clone(),
                 ..Default::default()
@@ -75,15 +67,48 @@ async fn upsert_bottlerocket_node_resource(
             ..Default::default()
         },
         spec: BottlerocketNodeSpec::default(),
-        status: Some(create_request.node_status.clone()),
         ..Default::default()
     };
 
-    let api: Api<BottlerocketNode> = Api::namespaced(k8s_client.clone(), constants::NAMESPACE);
-
-    k8s::create_or_update(&api, &br_node, "BottlerocketNode Custom Resource").await?;
+    Api::namespaced(k8s_client.clone(), constants::NAMESPACE)
+        .create(&PostParams::default(), &br_node)
+        .await
+        .context(error::BottlerocketNodeCreate {
+            node_name: create_request.node_name.clone(),
+            node_uid: create_request.node_uid.clone(),
+        })?;
 
     Ok(HttpResponse::Ok().body(format!("{}", json!(&br_node))))
+}
+
+#[put("/bottlerocket-node-resource")]
+async fn update_bottlerocket_node_resource(
+    _req: HttpRequest,
+    settings: web::Data<APIServerSettings>,
+    update_request: web::Json<UpdateBottlerocketNodeRequest>,
+) -> Result<impl Responder> {
+    let k8s_client = &settings.k8s_client;
+
+    let br_node_patch = json!({
+        "apiVersion": constants::API_VERSION,
+        "kind": "BottlerocketNode",
+        "status": &update_request.node_status
+    });
+
+    let api: Api<BottlerocketNode> = Api::namespaced(k8s_client.clone(), constants::NAMESPACE);
+
+    api.patch_status(
+        &update_request.node_name,
+        &PatchParams::default(),
+        &Patch::Merge(&br_node_patch),
+    )
+    .await
+    .context(error::BottlerocketNodeUpdate {
+        node_name: update_request.node_name.clone(),
+        node_uid: update_request.node_uid.clone(),
+    })?;
+
+    Ok(HttpResponse::Ok().body(format!("{}", json!(&update_request.node_status))))
 }
 
 #[derive(Clone)]
@@ -101,7 +126,8 @@ impl APIServer {
             App::new()
                 .wrap(middleware::Logger::default().exclude("/ping"))
                 .app_data(Data::new(self.settings.clone()))
-                .service(upsert_bottlerocket_node_resource)
+                .service(create_bottlerocket_node_resource)
+                .service(update_bottlerocket_node_resource)
                 .service(health_check)
         })
         .bind("0.0.0.0:8080")

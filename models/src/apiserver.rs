@@ -187,7 +187,6 @@ pub fn apiserver_deployment(
                             container_port: 8080,
                             ..Default::default()
                         }]),
-                        /* TODO: Health probes do not seem functional in kind. Test against EKS.
                         liveness_probe: Some(Probe {
                             http_get: Some(HTTPGetAction {
                                 path: Some("/ping".to_string()),
@@ -205,7 +204,7 @@ pub fn apiserver_deployment(
                             }),
                             initial_delay_seconds: Some(5),
                             ..Default::default()
-                        }), */
+                        }),
                         ..Default::default()
                     }],
                     image_pull_secrets,
@@ -241,7 +240,7 @@ pub fn apiserver_service() -> Service {
         spec: Some(ServiceSpec {
             selector: Some(btreemap! { LABEL_COMPONENT.to_string() => "apiserver".to_string()}),
             ports: Some(vec![ServicePort {
-                port: 8080,
+                port: 80,
                 target_port: Some(IntOrString::Int(8080)),
                 ..Default::default()
             }]),
