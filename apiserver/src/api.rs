@@ -3,7 +3,8 @@ use actix_web::{
     web::{self, Data},
     App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
-use kube::api::Api;
+use k8s_openapi::apimachinery::pkg::apis::meta::v1::OwnerReference;
+use kube::api::{Api, ObjectMeta};
 use serde_json::json;
 use snafu::ResultExt;
 
@@ -19,13 +20,15 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpsertBottlerocketNodeRequest {
     pub node_name: String,
+    pub node_uid: String,
     pub node_status: BottlerocketNodeStatus,
 }
 
 impl UpsertBottlerocketNodeRequest {
-    pub fn new(node_name: String, node_status: BottlerocketNodeStatus) -> Self {
+    pub fn new(node_name: String, node_uid: String, node_status: BottlerocketNodeStatus) -> Self {
         UpsertBottlerocketNodeRequest {
             node_name,
+            node_uid,
             node_status,
         }
     }
@@ -56,12 +59,25 @@ async fn upsert_bottlerocket_node_resource(
 ) -> Result<impl Responder> {
     let k8s_client = &settings.k8s_client;
 
-    let node_spec: BottlerocketNodeSpec = Default::default();
     // TODO add initial node state per below
     // let node_status = create_request.node_status.clone();
     // TODO add OwnerReference to created resource.
-    let br_node = BottlerocketNode::new(&create_request.node_name, node_spec);
-    return Ok(HttpResponse::Ok().body(format!("{}", json!(&br_node))));
+    let br_node = BottlerocketNode {
+        metadata: ObjectMeta {
+            name: Some(create_request.node_name.clone()),
+            owner_references: Some(vec![OwnerReference {
+                api_version: "v1".to_string(),
+                kind: "Node".to_string(),
+                name: create_request.node_name.clone(),
+                uid: create_request.node_uid.clone(),
+                ..Default::default()
+            }]),
+            ..Default::default()
+        },
+        spec: BottlerocketNodeSpec::default(),
+        status: Some(create_request.node_status.clone()),
+        ..Default::default()
+    };
 
     let api: Api<BottlerocketNode> = Api::namespaced(k8s_client.clone(), constants::NAMESPACE);
 
@@ -88,7 +104,7 @@ impl APIServer {
                 .service(upsert_bottlerocket_node_resource)
                 .service(health_check)
         })
-        .bind("127.0.0.1:8080")
+        .bind("0.0.0.0:8080")
         .context(error::HttpServerError)?
         .run()
         .await

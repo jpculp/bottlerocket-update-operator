@@ -3,10 +3,9 @@ use models::node::{BottlerocketNodeState, BottlerocketNodeStatus};
 
 #[tokio::main]
 async fn main() {
-    println!("hello, world");
-
     let node_req = UpsertBottlerocketNodeRequest::new(
-        "Test Node".to_owned(),
+        "Test Node".to_string(),
+        "asdfasdfasdf".to_string(),
         BottlerocketNodeStatus::new("0.0.1".to_owned(), vec![], BottlerocketNodeState::default()),
     );
 
