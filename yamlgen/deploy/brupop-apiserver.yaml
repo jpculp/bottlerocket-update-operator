@@ -68,11 +68,13 @@ metadata:
     app.kubernetes.io/managed-by: brupop
     app.kubernetes.io/part-of: brupop
     brupop.bottlerocket.aws/component: apiserver
-  name: testsys-controller
+  name: brupop-apiserver
   namespace: brupop-bottlerocket-aws
 spec:
   replicas: 3
-  selector: {}
+  selector:
+    matchLabels:
+      brupop.bottlerocket.aws/component: apiserver
   strategy:
     rollingUpdate:
       maxUnavailable: 33%
@@ -99,6 +101,8 @@ spec:
       containers:
         - image: "NULL"
           name: apiserver
+          ports:
+            - containerPort: 8080
       imagePullSecrets:
         - name: "NULL"
       serviceAccountName: brupop-controller-service-account

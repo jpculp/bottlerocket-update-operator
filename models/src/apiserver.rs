@@ -5,10 +5,11 @@ use k8s_openapi::api::apps::v1::{
     Deployment, DeploymentSpec, DeploymentStrategy, RollingUpdateDeployment,
 };
 use k8s_openapi::api::core::v1::{
-    Affinity, Container, LocalObjectReference, NodeAffinity, NodeSelector, NodeSelectorRequirement,
-    NodeSelectorTerm, PodSpec, PodTemplateSpec, ServiceAccount,
+    Affinity, Container, ContainerPort, LocalObjectReference, NodeAffinity, NodeSelector,
+    NodeSelectorRequirement, NodeSelectorTerm, PodSpec, PodTemplateSpec, ServiceAccount,
 };
 use k8s_openapi::api::rbac::v1::{ClusterRole, ClusterRoleBinding, PolicyRule, RoleRef, Subject};
+use k8s_openapi::apimachinery::pkg::apis::meta::v1::LabelSelector;
 use k8s_openapi::apimachinery::pkg::util::intstr::IntOrString;
 use kube::api::ObjectMeta;
 use maplit::btreemap;
@@ -117,12 +118,18 @@ pub fn apiserver_deployment(
                 .map(|(k, v)| (k.to_string(), v.to_string()))
                 .collect(),
             ),
-            name: Some("testsys-controller".to_string()),
+            name: Some("brupop-apiserver".to_string()),
             namespace: Some(NAMESPACE.to_string()),
             ..Default::default()
         },
         spec: Some(DeploymentSpec {
             replicas: Some(3),
+            selector: LabelSelector {
+                match_labels: Some(
+                    btreemap! { LABEL_COMPONENT.to_string() => "apiserver".to_string()},
+                ),
+                ..Default::default()
+            },
             strategy: Some(DeploymentStrategy {
                 rolling_update: Some(RollingUpdateDeployment {
                     max_unavailable: Some(IntOrString::String("33%".to_string())),
@@ -175,6 +182,10 @@ pub fn apiserver_deployment(
                         image: Some(apiserver_image),
                         image_pull_policy: None,
                         name: "apiserver".to_string(),
+                        ports: Some(vec![ContainerPort {
+                            container_port: 8080,
+                            ..Default::default()
+                        }]),
                         ..Default::default()
                     }],
                     image_pull_secrets,
