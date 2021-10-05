@@ -182,7 +182,8 @@ pub fn apiserver_deployment(
                     containers: vec![Container {
                         image: Some(apiserver_image),
                         image_pull_policy: None,
-                        name: "apiserver".to_string(),
+                        name: "brupop".to_string(),
+                        command: Some(vec!["./apiserver".to_string()]),
                         ports: Some(vec![ContainerPort {
                             container_port: 8080,
                             ..Default::default()

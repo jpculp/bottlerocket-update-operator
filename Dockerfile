@@ -28,3 +28,26 @@ RUN curl -O -sSL https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.g
 ENV PKG_CONFIG_ALLOW_CROSS=1
 ENV OPENSSL_STATIC=true
 ENV OPENSSL_DIR=/musl
+
+FROM build as brupopbuild
+ARG ARCH
+USER root
+
+ADD ./ /src/
+RUN cargo install --locked --target ${ARCH}-bottlerocket-linux-musl --path /src/agent --root /src/agent && \
+    cargo install --locked --target ${ARCH}-bottlerocket-linux-musl --path /src/apiserver --root /src/apiserver && \
+    cargo install --locked --target ${ARCH}-bottlerocket-linux-musl --path /src/controller --root /src/controller
+
+
+FROM scratch
+# Copy CA certificates store
+COPY --from=build /etc/ssl /etc/ssl
+COPY --from=build /etc/pki /etc/pki
+
+# Copy rust binaries into resulting image
+COPY --from=brupopbuild /src/apiserver/bin/apiserver ./
+COPY --from=brupopbuild /src/agent/bin/agent ./
+COPY --from=brupopbuild /src/controller/bin/controller ./
+
+# Expose apiserver port
+EXPOSE 8080

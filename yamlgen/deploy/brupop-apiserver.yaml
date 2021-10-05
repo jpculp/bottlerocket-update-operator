@@ -99,10 +99,22 @@ spec:
                       - amd64
                       - arm64
       containers:
-        - image: "109276217309.dkr.ecr.us-west-2.amazonaws.com/brupop:latest"
-          name: apiserver
+        - command:
+            - "./apiserver"
+          image: "109276217309.dkr.ecr.us-west-2.amazonaws.com/brupop:latest"
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 8080
+            initialDelaySeconds: 5
+          name: brupop
           ports:
             - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 8080
+            initialDelaySeconds: 5
       imagePullSecrets:
         - name: brupop
       serviceAccountName: brupop-controller-service-account
@@ -119,7 +131,7 @@ metadata:
   namespace: brupop-bottlerocket-aws
 spec:
   ports:
-    - port: 8080
+    - port: 80
       targetPort: 8080
   selector:
     brupop.bottlerocket.aws/component: apiserver
