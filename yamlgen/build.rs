@@ -27,8 +27,8 @@ fn main() {
     // Re-run this build script if the model changes.
     println!("cargo:rerun-if-changed=../models/src");
     // Re-run the yaml generation if these variables change
-    println!("cargo:rerun-if-env-changed=BRUPOP_APISERVER_IMAGE");
-    println!("cargo:rerun-if-env-changed=BRUPOP_APISERVER_IMAGE_PULL_SECRET");
+    println!("cargo:rerun-if-env-changed=BRUPOP_CONTAINER_IMAGE");
+    println!("cargo:rerun-if-env-changed=BRUPOP_CONTAINER_IMAGE_PULL_SECRET");
 
     let path = PathBuf::from(YAMLGEN_DIR)
         .join("deploy")
@@ -44,8 +44,8 @@ fn main() {
     bottlerocket_node_crd.write_all(HEADER.as_bytes()).unwrap();
     serde_yaml::to_writer(&bottlerocket_node_crd, &BottlerocketNode::crd()).unwrap();
 
-    let apiserver_image = env::var("BRUPOP_APISERVER_IMAGE").ok().unwrap();
-    let apiserver_image_pull_secrets = env::var("BRUPOP_APISERVER_IMAGE_PULL_SECRET").ok();
+    let apiserver_image = env::var("BRUPOP_CONTAINER_IMAGE").ok().unwrap();
+    let apiserver_image_pull_secrets = env::var("BRUPOP_CONTAINER_IMAGE_PULL_SECRET").ok();
 
     brupop_apiserver.write_all(HEADER.as_bytes()).unwrap();
     serde_yaml::to_writer(&brupop_apiserver, &brupop_namespace()).unwrap();
