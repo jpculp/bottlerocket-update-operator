@@ -54,9 +54,11 @@ async fn create_bottlerocket_node_resource(
 ) -> Result<impl Responder> {
     let k8s_client = &settings.k8s_client;
 
+    let brn_name = format!("brn-{}", &create_request.node_name);
+
     let br_node = BottlerocketNode {
         metadata: ObjectMeta {
-            name: Some(create_request.node_name.clone()),
+            name: Some(brn_name),
             owner_references: Some(vec![OwnerReference {
                 api_version: "v1".to_string(),
                 kind: "BottlerocketNode".to_string(),
@@ -95,10 +97,12 @@ async fn update_bottlerocket_node_resource(
         "status": &update_request.node_status
     });
 
+    let brn_name = format!("brn-{}", &update_request.node_name);
+
     let api: Api<BottlerocketNode> = Api::namespaced(k8s_client.clone(), constants::NAMESPACE);
 
     api.patch_status(
-        &update_request.node_name,
+        &brn_name,
         &PatchParams::default(),
         &Patch::Merge(&br_node_patch),
     )
