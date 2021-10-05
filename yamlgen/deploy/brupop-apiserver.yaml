@@ -99,10 +99,27 @@ spec:
                       - amd64
                       - arm64
       containers:
-        - image: "NULL"
+        - image: "109276217309.dkr.ecr.us-west-2.amazonaws.com/brupop:latest"
           name: apiserver
           ports:
             - containerPort: 8080
       imagePullSecrets:
-        - name: "NULL"
+        - name: brupop
       serviceAccountName: brupop-controller-service-account
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: apiserver
+    app.kubernetes.io/managed-by: brupop
+    app.kubernetes.io/part-of: brupop
+    brupop.bottlerocket.aws/component: apiserver
+  name: brupop-apiserver
+  namespace: brupop-bottlerocket-aws
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    brupop.bottlerocket.aws/component: apiserver

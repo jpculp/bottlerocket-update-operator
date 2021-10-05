@@ -9,7 +9,7 @@ use kube::CustomResourceExt;
 use models::{
     apiserver::{
         apiserver_cluster_role, apiserver_cluster_role_binding, apiserver_deployment,
-        apiserver_service_account,
+        apiserver_service, apiserver_service_account,
     },
     namespace::brupop_namespace,
     node::BottlerocketNode,
@@ -23,13 +23,12 @@ const YAMLGEN_DIR: &str = env!("CARGO_MANIFEST_DIR");
 const HEADER: &str = "# This file is generated. Do not edit.\n";
 
 fn main() {
+    dotenv::dotenv().ok();
     // Re-run this build script if the model changes.
     println!("cargo:rerun-if-changed=../models/src");
     // Re-run the yaml generation if these variables change
     println!("cargo:rerun-if-env-changed=BRUPOP_APISERVER_IMAGE");
     println!("cargo:rerun-if-env-changed=BRUPOP_APISERVER_IMAGE_PULL_SECRET");
-
-    dotenv::dotenv().ok();
 
     let path = PathBuf::from(YAMLGEN_DIR)
         .join("deploy")
@@ -58,4 +57,5 @@ fn main() {
         &apiserver_deployment(apiserver_image, apiserver_image_pull_secrets),
     )
     .unwrap();
+    serde_yaml::to_writer(&brupop_apiserver, &apiserver_service()).unwrap();
 }

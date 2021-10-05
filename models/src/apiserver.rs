@@ -5,8 +5,9 @@ use k8s_openapi::api::apps::v1::{
     Deployment, DeploymentSpec, DeploymentStrategy, RollingUpdateDeployment,
 };
 use k8s_openapi::api::core::v1::{
-    Affinity, Container, ContainerPort, LocalObjectReference, NodeAffinity, NodeSelector,
-    NodeSelectorRequirement, NodeSelectorTerm, PodSpec, PodTemplateSpec, ServiceAccount,
+    Affinity, Container, ContainerPort, HTTPGetAction, LocalObjectReference, NodeAffinity,
+    NodeSelector, NodeSelectorRequirement, NodeSelectorTerm, PodSpec, PodTemplateSpec, Probe,
+    Service, ServiceAccount, ServicePort, ServiceSpec,
 };
 use k8s_openapi::api::rbac::v1::{ClusterRole, ClusterRoleBinding, PolicyRule, RoleRef, Subject};
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::LabelSelector;
@@ -186,6 +187,25 @@ pub fn apiserver_deployment(
                             container_port: 8080,
                             ..Default::default()
                         }]),
+                        /* TODO: Health probes do not seem functional in kind. Test against EKS.
+                        liveness_probe: Some(Probe {
+                            http_get: Some(HTTPGetAction {
+                                path: Some("/ping".to_string()),
+                                port: IntOrString::Int(8080),
+                                ..Default::default()
+                            }),
+                            initial_delay_seconds: Some(5),
+                            ..Default::default()
+                        }),
+                        readiness_probe: Some(Probe {
+                            http_get: Some(HTTPGetAction {
+                                path: Some("/ping".to_string()),
+                                port: IntOrString::Int(8080),
+                                ..Default::default()
+                            }),
+                            initial_delay_seconds: Some(5),
+                            ..Default::default()
+                        }), */
                         ..Default::default()
                     }],
                     image_pull_secrets,
@@ -193,6 +213,38 @@ pub fn apiserver_deployment(
                     ..Default::default()
                 }),
             },
+            ..Default::default()
+        }),
+        ..Default::default()
+    }
+}
+
+pub fn apiserver_service() -> Service {
+    Service {
+        metadata: ObjectMeta {
+            labels: Some(
+                btreemap! {
+                    APP_COMPONENT => "apiserver",
+                    APP_MANAGED_BY => "brupop",
+                    APP_PART_OF => "brupop",
+                    LABEL_COMPONENT => "apiserver",
+                }
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.to_string()))
+                .collect(),
+            ),
+            name: Some("brupop-apiserver".to_string()),
+            namespace: Some(NAMESPACE.to_string()),
+            ..Default::default()
+        },
+
+        spec: Some(ServiceSpec {
+            selector: Some(btreemap! { LABEL_COMPONENT.to_string() => "apiserver".to_string()}),
+            ports: Some(vec![ServicePort {
+                port: 8080,
+                target_port: Some(IntOrString::Int(8080)),
+                ..Default::default()
+            }]),
             ..Default::default()
         }),
         ..Default::default()
